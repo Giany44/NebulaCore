@@ -1,0 +1,81 @@
+﻿<Window x:Class="NebulaCore.HomeWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Nebula Library" Height="720" Width="1080"
+        WindowStyle="None" ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="LocalGreen" Color="#a4d007"/>
+    </Window.Resources>
+
+    <Window.Background>
+        <RadialGradientBrush GradientOrigin="0.5,0.3" Center="0.5,0.3" RadiusX="0.8" RadiusY="0.8">
+            <GradientStop Color="#1b2838" Offset="0"/>
+            <GradientStop Color="#171a21" Offset="1"/>
+        </RadialGradientBrush>
+    </Window.Background>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="60"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Background="#0a0c0f" MouseLeftButtonDown="TopBar_MouseDown">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="_" Click="BtnMinimize_Click" Width="40" Background="Transparent" Foreground="#888" BorderThickness="0" FontWeight="Bold"/>
+                <Button Content="X" Click="BtnCloseApp_Click" Width="40" Background="Transparent" Foreground="#ff5c5c" BorderThickness="0" FontWeight="Bold"/>
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="1" Background="#171a21">
+            <StackPanel Orientation="Horizontal" Margin="20,0">
+                <TextBlock Text="NEBULA STORE" Foreground="#66c0f4" FontSize="20" FontWeight="Black" VerticalAlignment="Center"/>
+                <TextBlock Text="BIBLIOTECA" Foreground="White" VerticalAlignment="Center" Margin="40,0,0,0" FontSize="14" FontWeight="Bold" TextDecorations="Underline"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="20,0">
+                <TextBlock x:Name="lblUser" Text="USER" VerticalAlignment="Center" Foreground="#66c0f4" FontWeight="Bold" Margin="0,0,15,0"/>
+                <Button Content="LOGOUT" Click="BtnLogout_Click" Width="60" Height="30" Background="#2a475e" Foreground="White" BorderThickness="0" FontSize="10"/>
+            </StackPanel>
+        </Grid>
+
+        <ScrollViewer Grid.Row="2" Margin="20" VerticalScrollBarVisibility="Auto">
+            <WrapPanel HorizontalAlignment="Center">
+
+                <Border Width="220" Height="320" Margin="25" CornerRadius="8" BorderBrush="#2a475e" BorderThickness="1">
+                    <Grid>
+                        <Border CornerRadius="8">
+                            <Border.Background>
+                                <ImageBrush ImageSource="/Images/cyberpunk.jpg" Stretch="UniformToFill"/>
+                            </Border.Background>
+                        </Border>
+                        <Border CornerRadius="8" Background="Black" Opacity="0.4"/>
+                        <StackPanel VerticalAlignment="Bottom" Margin="0,0,0,15">
+                            <TextBlock Text="NEBULA CITY" Foreground="White" HorizontalAlignment="Center" FontWeight="Black" FontSize="18"/>
+                            <Button Content="JUGAR" Width="180" Height="35" Background="{StaticResource LocalGreen}" Foreground="White" BorderThickness="0" FontWeight="Bold" Margin="0,10,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Border Width="220" Height="320" Margin="25" CornerRadius="8" BorderBrush="#2a475e" BorderThickness="1">
+                    <Grid>
+                        <Border CornerRadius="8">
+                            <Border.Background>
+                                <ImageBrush ImageSource="/Images/space.jpg" Stretch="UniformToFill"/>
+                            </Border.Background>
+                        </Border>
+                        <Border CornerRadius="8" Background="Black" Opacity="0.4"/>
+                        <StackPanel VerticalAlignment="Bottom" Margin="0,0,0,15">
+                            <TextBlock Text="GALACTIC WARS" Foreground="White" HorizontalAlignment="Center" FontWeight="Black" FontSize="18"/>
+                            <Button Content="INSTALAR" Width="180" Height="35" Background="#66c0f4" Foreground="Black" BorderThickness="0" FontWeight="Bold" Margin="0,10,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+            </WrapPanel>
+        </ScrollViewer>
+    </Grid>
+</Window>
