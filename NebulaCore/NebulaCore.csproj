@@ -9,8 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Resource Include="Images\cyberpunk.jpg" />
-    <Resource Include="Images\space.jpg" />
+    <PackageReference Include="MySql.Data" Version="9.6.0" />
   </ItemGroup>
 
 </Project>

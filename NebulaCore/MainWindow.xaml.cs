@@ -1,113 +1,114 @@
-﻿using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
+﻿using System;
+using System.Windows;
+using System.Windows.Input; // IMPORTANTE PARA ARRASTRAR
+using MySql.Data.MySqlClient;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace NebulaCore
 {
     public partial class MainWindow : Window
     {
-        private int intentos = 0;
-        private bool isBloqueado = false;
-
         public MainWindow()
         {
             InitializeComponent();
         }
 
-        // --- BARRA DE TÍTULO CUSTOM ---
-        private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
-        {
-            if (e.ChangedButton == MouseButton.Left) this.DragMove();
-        }
-        private void BtnMinimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
-        private void BtnClose_Click(object sender, RoutedEventArgs e) => Application.Current.Shutdown();
-
-        // --- LÓGICA VER / OCULTAR CONTRASEÑA ---
-        private void BtnShowPass_Click(object sender, RoutedEventArgs e)
-        {
-            if (btnShowPass.IsChecked == true)
-            {
-                txtPasswordVisible.Text = txtPassword.Password;
-                txtPasswordVisible.Visibility = Visibility.Visible;
-                txtPassword.Visibility = Visibility.Collapsed;
-            }
-            else
-            {
-                txtPassword.Password = txtPasswordVisible.Text;
-                txtPassword.Visibility = Visibility.Visible;
-                txtPasswordVisible.Visibility = Visibility.Collapsed;
-            }
-        }
-        // Sincronizar cambios manuales
-        private void TxtPassword_PasswordChanged(object sender, RoutedEventArgs e)
-        {
-            if (txtPassword.Visibility == Visibility.Visible) txtPasswordVisible.Text = txtPassword.Password;
-        }
-        private void TxtPasswordVisible_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (txtPasswordVisible.Visibility == Visibility.Visible) txtPassword.Password = txtPasswordVisible.Text;
-        }
-
-        // --- LÓGICA DE LOGIN ---
         private void BtnLogin_Click(object sender, RoutedEventArgs e)
         {
-            if (isBloqueado) { lblMensaje.Text = "TERMINAL BLOQUEADO"; return; }
-
             string u = txtUsuario.Text;
-            string p = txtPassword.Password;
+            string p = HashPasswordSimple(txtPassword.Password);
 
-            if (string.IsNullOrWhiteSpace(u) || string.IsNullOrWhiteSpace(p))
+            if (string.IsNullOrEmpty(u) || string.IsNullOrEmpty(txtPassword.Password))
             {
-                lblMensaje.Text = "DATOS REQUERIDOS";
+                lblMensaje.Text = "Por favor, rellena todos los campos.";
                 return;
             }
 
-            // Usamos nuestro sistema NebulaSystem (JSON + HASH)
-            if (NebulaSystem.ValidateLogin(u, p))
+            try
             {
-                intentos = 0;
-                HomeWindow home = new HomeWindow(u);
-                home.Show();
-                this.Close();
-            }
-            else
-            {
-                intentos++;
-                lblMensaje.Text = "CREDENCIALES INVÁLIDAS";
-
-                // Efecto visual de error (sacudir ventana sería top, pero dejemos el mensaje)
-                if (intentos >= 3)
+                using (MySqlConnection con = ConexionDB.ObtenerConexion())
                 {
-                    isBloqueado = true;
-                    lblMensaje.Text = "SISTEMA DE SEGURIDAD ACTIVADO";
-                    btnLogin.IsEnabled = false;
-                    btnLogin.Opacity = 0.5;
+                    if (con == null) return;
+
+                    con.Open();
+                    string sql = "SELECT rol, estado FROM usuarios WHERE nombre_usuario=@u AND password=@p";
+                    MySqlCommand cmd = new MySqlCommand(sql, con);
+                    cmd.Parameters.AddWithValue("@u", u);
+                    cmd.Parameters.AddWithValue("@p", p);
+
+                    using (MySqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            string rol = reader["rol"].ToString();
+                            string estado = reader["estado"].ToString();
+
+                            if (estado == "Baneado")
+                            {
+                                MessageBox.Show("Acceso denegado.\nTu cuenta ha sido suspendida.", "Cuenta Baneada", MessageBoxButton.OK, MessageBoxImage.Warning);
+                                return;
+                            }
+
+                            if (rol == "admin" || rol == "Admin")
+                            {
+                                AdminWindow adminWin = new AdminWindow();
+                                adminWin.Show();
+                            }
+                            else
+                            {
+                                HomeWindow home = new HomeWindow(u);
+                                home.Show();
+                            }
+                            this.Close();
+                        }
+                        else
+                        {
+                            lblMensaje.Text = "Usuario o contraseña incorrectos";
+                        }
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error de conexión: " + ex.Message);
             }
         }
 
-        // --- SISTEMA DE REGISTRO RÁPIDO ---
+        private string HashPasswordSimple(string rawData)
+        {
+            using (SHA256 sha256Hash = SHA256.Create())
+            {
+                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(rawData));
+                StringBuilder builder = new StringBuilder();
+                for (int i = 0; i < bytes.Length; i++)
+                    builder.Append(bytes[i].ToString("x2"));
+                return builder.ToString();
+            }
+        }
+
         private void BtnRegister_Click(object sender, MouseButtonEventArgs e)
         {
-            string u = txtUsuario.Text;
-            string p = txtPassword.Password;
+            RegisterWindow reg = new RegisterWindow();
+            reg.ShowDialog();
+        }
 
-            if (string.IsNullOrWhiteSpace(u) || string.IsNullOrWhiteSpace(p))
-            {
-                lblMensaje.Text = "INTRODUZCA USUARIO Y PASS PARA REGISTRAR";
-                return;
-            }
+        // ===============================================
+        //  MÉTODOS NUEVOS PARA LA VENTANA SIN BORDES
+        // ===============================================
 
-            bool exito = NebulaSystem.RegisterUser(u, p);
-            if (exito)
+        // 1. Cerrar la aplicación
+        private void BtnCerrar_Click(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Shutdown();
+        }
+
+        // 2. Mover la ventana al hacer clic y arrastrar
+        private void BarraTitulo_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
             {
-                lblMensaje.Foreground = System.Windows.Media.Brushes.LightGreen;
-                lblMensaje.Text = "USUARIO REGISTRADO. INICIE SESIÓN.";
-            }
-            else
-            {
-                lblMensaje.Foreground = System.Windows.Media.Brushes.Red;
-                lblMensaje.Text = "EL USUARIO YA EXISTE.";
+                this.DragMove();
             }
         }
     }

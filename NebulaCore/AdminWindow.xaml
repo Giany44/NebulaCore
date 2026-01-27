@@ -1,0 +1,247 @@
+﻿<Window x:Class="NebulaCore.AdminWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Panel de Control - Admin" Height="650" Width="1000"
+        WindowStartupLocation="CenterScreen" Background="#1E1E1E">
+
+	<Window.Resources>
+		<Style TargetType="TextBlock">
+			<Setter Property="Foreground" Value="White"/>
+			<Setter Property="VerticalAlignment" Value="Center"/>
+		</Style>
+		<Style TargetType="TextBox">
+			<Setter Property="Height" Value="25"/>
+			<Setter Property="VerticalContentAlignment" Value="Center"/>
+			<Setter Property="Padding" Value="5,0"/>
+			<Setter Property="Background" Value="#333"/>
+			<Setter Property="Foreground" Value="White"/>
+			<Setter Property="BorderBrush" Value="#555"/>
+		</Style>
+		<Style TargetType="PasswordBox">
+			<Setter Property="Height" Value="25"/>
+			<Setter Property="VerticalContentAlignment" Value="Center"/>
+			<Setter Property="Padding" Value="5,0"/>
+			<Setter Property="Background" Value="#333"/>
+			<Setter Property="Foreground" Value="White"/>
+			<Setter Property="BorderBrush" Value="#555"/>
+		</Style>
+		<Style TargetType="Button">
+			<Setter Property="Margin" Value="5"/>
+			<Setter Property="Padding" Value="10,5"/>
+			<Setter Property="FontWeight" Value="Bold"/>
+			<Setter Property="Cursor" Value="Hand"/>
+			<Setter Property="BorderThickness" Value="0"/>
+			<Setter Property="Template">
+				<Setter.Value>
+					<ControlTemplate TargetType="Button">
+						<Border Background="{TemplateBinding Background}" CornerRadius="3">
+							<ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+						</Border>
+					</ControlTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
+
+		<Style TargetType="DataGridColumnHeader">
+			<Setter Property="Background" Value="#444"/>
+			<Setter Property="Foreground" Value="White"/>
+			<Setter Property="Padding" Value="10,8"/>
+			<Setter Property="FontWeight" Value="Bold"/>
+			<Setter Property="BorderThickness" Value="0,0,1,1"/>
+			<Setter Property="BorderBrush" Value="#555"/>
+		</Style>
+	</Window.Resources>
+
+	<Grid Margin="10">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="60"/>
+			<RowDefinition Height="*"/>
+		</Grid.RowDefinitions>
+
+		<StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+			<TextBlock Text="NEBULA" FontSize="28" FontWeight="Black" Foreground="White"/>
+			<TextBlock Text="ADMIN" FontSize="28" FontWeight="Light" Foreground="#66C0F4" Margin="5,0"/>
+		</StackPanel>
+
+		<Button Content="Cerrar Sesión" Click="BtnLogout_Click" HorizontalAlignment="Right" Background="#C62828" Foreground="White" Padding="15,5"/>
+
+		<TabControl Grid.Row="1" Background="Transparent" BorderThickness="0" Margin="0,10,0,0">
+			<TabControl.Resources>
+				<Style TargetType="TabItem">
+					<Setter Property="Template">
+						<Setter.Value>
+							<ControlTemplate TargetType="TabItem">
+								<Border Name="Border" BorderThickness="0" Background="#2D2D30" Margin="0,0,2,0" CornerRadius="5,5,0,0" Padding="15,10">
+									<ContentPresenter x:Name="ContentSite" VerticalAlignment="Center" HorizontalAlignment="Center" ContentSource="Header" Margin="10,2"/>
+								</Border>
+								<ControlTemplate.Triggers>
+									<Trigger Property="IsSelected" Value="True">
+										<Setter TargetName="Border" Property="Background" Value="#66C0F4"/>
+										<Setter Property="Foreground" Value="Black"/>
+										<Setter Property="FontWeight" Value="Bold"/>
+									</Trigger>
+									<Trigger Property="IsSelected" Value="False">
+										<Setter Property="Foreground" Value="White"/>
+									</Trigger>
+								</ControlTemplate.Triggers>
+							</ControlTemplate>
+						</Setter.Value>
+					</Setter>
+				</Style>
+			</TabControl.Resources>
+
+			<TabItem Header="👤 GESTIÓN USUARIOS">
+				<Grid Background="#252526">
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="320"/>
+						<ColumnDefinition Width="*"/>
+					</Grid.ColumnDefinitions>
+
+					<StackPanel Grid.Column="0" Margin="20">
+						<TextBlock Text="ID Usuario (Auto)" Foreground="Gray" FontSize="11"/>
+						<TextBox x:Name="txtID" IsReadOnly="True" Background="#222" Foreground="Gray" BorderBrush="Transparent" Margin="0,0,0,10"/>
+
+						<TextBlock Text="Nombre de Usuario"/>
+						<TextBox x:Name="txtNombre" Margin="0,0,0,10"/>
+
+						<TextBlock Text="Email"/>
+						<TextBox x:Name="txtEmail" Margin="0,0,0,10"/>
+
+						<TextBlock Text="Contraseña (Solo para crear/cambiar)"/>
+						<PasswordBox x:Name="txtPass" Height="25" Margin="0,0,0,10"/>
+
+						<TextBlock Text="Rol"/>
+						<ComboBox x:Name="cmbRol" Height="25" Margin="0,0,0,10">
+							<ComboBoxItem Content="user"/>
+							<ComboBoxItem Content="admin"/>
+						</ComboBox>
+
+						<TextBlock Text="Estado Actual"/>
+						<TextBox x:Name="txtEstado" IsReadOnly="True" Background="#222" Foreground="#66C0F4" FontWeight="Bold" Margin="0,0,0,10"/>
+
+						<TextBlock Text="Motivo Baneo (Opcional)"/>
+						<TextBox x:Name="txtMotivo" Margin="0,0,0,20"/>
+
+						<WrapPanel HorizontalAlignment="Center">
+							<Button Content="Limpiar" Click="BtnLimpiar_Click" Background="#555" Foreground="White"/>
+							<Button Content="Crear" Click="BtnAgregar_Click" Background="#4CAF50" Foreground="White"/>
+							<Button Content="Editar" Click="BtnModificar_Click" Background="#FFC107" Foreground="Black"/>
+						</WrapPanel>
+						<WrapPanel HorizontalAlignment="Center" Margin="0,10">
+							<Button Content="Banear / Desbanear" Click="BtnBanear_Click" Background="#FF5722" Foreground="White" Width="140"/>
+							<Button Content="Eliminar" Click="BtnEliminar_Click" Background="#D32F2F" Foreground="White"/>
+						</WrapPanel>
+					</StackPanel>
+
+					<Grid Grid.Column="1" Margin="20">
+						<Grid.RowDefinitions>
+							<RowDefinition Height="Auto"/>
+							<RowDefinition Height="*"/>
+						</Grid.RowDefinitions>
+						<StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+							<TextBox x:Name="txtBusqueda" Width="250" Tag="Buscar usuario..." Height="30" FontSize="14"/>
+							<Button Content="🔍 Buscar" Click="BtnBuscar_Click" Width="100" Background="#66C0F4" Foreground="Black"/>
+						</StackPanel>
+
+						<DataGrid x:Name="gridUsuarios" Grid.Row="1" AutoGenerateColumns="True" SelectionChanged="GridUsuarios_SelectionChanged" IsReadOnly="True"
+                                  Background="#1E1E1E" RowBackground="#252526" AlternatingRowBackground="#333" Foreground="White"
+                                  HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#444" BorderBrush="#444"/>
+					</Grid>
+				</Grid>
+			</TabItem>
+
+			<TabItem Header="🎮 GESTIÓN JUEGOS">
+				<Grid Background="#252526">
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="320"/>
+						<ColumnDefinition Width="*"/>
+					</Grid.ColumnDefinitions>
+
+					<StackPanel Grid.Column="0" Margin="20">
+						<TextBlock Text="ID Juego (Auto)" Foreground="Gray" FontSize="11"/>
+						<TextBox x:Name="txtJuegoID" IsReadOnly="True" Background="#222" Foreground="Gray" BorderBrush="Transparent" Margin="0,0,0,10"/>
+
+						<TextBlock Text="Título del Juego"/>
+						<TextBox x:Name="txtJuegoTitulo" Margin="0,0,0,10"/>
+
+						<TextBlock Text="Descripción"/>
+						<TextBox x:Name="txtJuegoDesc" Height="60" TextWrapping="Wrap" AcceptsReturn="True" Margin="0,0,0,10"/>
+
+						<Grid>
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="*"/>
+								<ColumnDefinition Width="*"/>
+							</Grid.ColumnDefinitions>
+							<StackPanel Grid.Column="0" Margin="0,0,5,0">
+								<TextBlock Text="Precio (€)"/>
+								<TextBox x:Name="txtJuegoPrecio"/>
+							</StackPanel>
+							<StackPanel Grid.Column="1" Margin="5,0,0,0">
+								<TextBlock Text="Stock"/>
+								<TextBox x:Name="txtJuegoStock"/>
+							</StackPanel>
+						</Grid>
+
+						<TextBlock Text="Género" Margin="0,10,0,0"/>
+						<ComboBox x:Name="cmbJuegoGenero" Height="25" Margin="0,0,0,10">
+							<ComboBoxItem Content="Acción"/>
+							<ComboBoxItem Content="Aventura"/>
+							<ComboBoxItem Content="RPG"/>
+							<ComboBoxItem Content="Deportes"/>
+							<ComboBoxItem Content="Estrategia"/>
+							<ComboBoxItem Content="Simulación"/>
+						</ComboBox>
+
+						<TextBlock Text="URL Imagen (Deja vacío para automático)"/>
+						<Grid Margin="0,0,0,20">
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="*"/>
+								<ColumnDefinition Width="Auto"/>
+							</Grid.ColumnDefinitions>
+							<TextBox x:Name="txtJuegoImagen" Grid.Column="0"/>
+							<Button Grid.Column="1" Content="🌐 Google" Click="BtnBuscarFoto_Click" Background="#2196F3" Foreground="White" Margin="5,0,0,0" ToolTip="Buscar carátula en Google"/>
+						</Grid>
+
+						<WrapPanel HorizontalAlignment="Center">
+							<Button Content="Limpiar" Click="BtnJuegoLimpiar_Click" Background="#555" Foreground="White"/>
+							<Button Content="Guardar Juego" Click="BtnJuegoGuardar_Click" Background="#4CAF50" Foreground="White" Width="120"/>
+							<Button Content="Eliminar" Click="BtnJuegoEliminar_Click" Background="#D32F2F" Foreground="White"/>
+						</WrapPanel>
+					</StackPanel>
+
+					<Grid Grid.Column="1" Margin="20">
+						<Grid.RowDefinitions>
+							<RowDefinition Height="Auto"/>
+							<RowDefinition Height="*"/>
+						</Grid.RowDefinitions>
+						<Button Content="🔄 Refrescar Lista" Click="BtnRefrescarJuegos_Click" HorizontalAlignment="Left" Background="#444" Foreground="White" Margin="0,0,0,10"/>
+
+						<DataGrid x:Name="gridJuegos" Grid.Row="1" AutoGenerateColumns="True" SelectionChanged="GridJuegos_SelectionChanged" IsReadOnly="True"
+                                  Background="#1E1E1E" RowBackground="#252526" AlternatingRowBackground="#333" Foreground="White"
+                                  HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#444" BorderBrush="#444"/>
+					</Grid>
+				</Grid>
+			</TabItem>
+
+			<TabItem Header="📜 LOGS DEL SISTEMA">
+				<Grid Background="#252526" Margin="10">
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto"/>
+						<RowDefinition Height="*"/>
+					</Grid.RowDefinitions>
+
+					<StackPanel Orientation="Horizontal" Margin="0,10,0,20">
+						<TextBlock Text="Historial de Auditoría" VerticalAlignment="Center" FontSize="20" FontWeight="Light" Margin="10,0,20,0"/>
+						<Button Content="🔄 Actualizar Logs" Click="BtnRefrescarLogs_Click" Background="#66C0F4" Foreground="Black" FontWeight="Bold"/>
+					</StackPanel>
+
+					<DataGrid x:Name="gridLogs" Grid.Row="1" AutoGenerateColumns="True" IsReadOnly="True"
+                              Background="#1E1E1E" RowBackground="#252526" AlternatingRowBackground="#333" Foreground="White"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#444" BorderBrush="#444">
+					</DataGrid>
+				</Grid>
+			</TabItem>
+
+		</TabControl>
+	</Grid>
+</Window>
