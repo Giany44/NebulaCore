@@ -1,8 +1,11 @@
 ﻿<Window x:Class="NebulaCore.AdminWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Panel de Control - Admin" Height="650" Width="1000"
-        WindowStartupLocation="CenterScreen" Background="#1E1E1E">
+        Title="Panel de Control - Admin" Height="680" Width="1000"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        Background="#1E1E1E">
 
 	<Window.Resources>
 		<Style TargetType="TextBlock">
@@ -165,7 +168,7 @@
 						<TextBox x:Name="txtJuegoTitulo" Margin="0,0,0,10"/>
 
 						<TextBlock Text="Descripción"/>
-						<TextBox x:Name="txtJuegoDesc" Height="60" TextWrapping="Wrap" AcceptsReturn="True" Margin="0,0,0,10"/>
+						<TextBox x:Name="txtJuegoDesc" Height="50" TextWrapping="Wrap" AcceptsReturn="True" Margin="0,0,0,10"/>
 
 						<Grid>
 							<Grid.ColumnDefinitions>
@@ -192,7 +195,17 @@
 							<ComboBoxItem Content="Simulación"/>
 						</ComboBox>
 
-						<TextBlock Text="URL Imagen (Deja vacío para automático)"/>
+						<TextBlock Text="Fabricante / Compañía"/>
+						<TextBox x:Name="txtJuegoFabricante" Margin="0,0,0,10"/>
+
+						<CheckBox x:Name="chkVisible" Content="Visible en Tienda" IsChecked="True"
+                                  Foreground="White" FontWeight="Bold" Margin="0,0,0,10">
+							<CheckBox.LayoutTransform>
+								<ScaleTransform ScaleX="1.1" ScaleY="1.1"/>
+							</CheckBox.LayoutTransform>
+						</CheckBox>
+
+						<TextBlock Text="URL Imagen (Auto o Manual)"/>
 						<Grid Margin="0,0,0,20">
 							<Grid.ColumnDefinitions>
 								<ColumnDefinition Width="*"/>

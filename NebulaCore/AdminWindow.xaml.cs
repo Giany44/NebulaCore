@@ -4,14 +4,14 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input; // Necesario
 using MySql.Data.MySqlClient;
-using System.Diagnostics; // <--- IMPRESCINDIBLE PARA EL BOTÓN DE GOOGLE
+using System.Diagnostics;
 
 namespace NebulaCore
 {
     public partial class AdminWindow : Window
     {
-        // Variables para controlar qué estamos editando
         private int idUsuarioSeleccionado = 0;
         private int idJuegoSeleccionado = 0;
 
@@ -19,8 +19,15 @@ namespace NebulaCore
         {
             InitializeComponent();
             CargarUsuarios();
-            CargarJuegos(); // Carga inicial de juegos
-            CargarLogs();   // Carga inicial de logs
+            CargarJuegos();
+            CargarLogs();
+        }
+
+        // --- NUEVO: Permitir arrastrar la ventana de Admin al hacer clic en fondo ---
+        protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
+        {
+            base.OnMouseLeftButtonDown(e);
+            this.DragMove();
         }
 
         // =========================================================
@@ -55,18 +62,17 @@ namespace NebulaCore
 
         private void GridUsuarios_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (gridUsuarios.SelectedItem == null) return;
             DataRowView row = (DataRowView)gridUsuarios.SelectedItem;
-            if (row != null)
-            {
-                idUsuarioSeleccionado = Convert.ToInt32(row["id"]);
-                txtID.Text = row["id"].ToString();
-                txtNombre.Text = row["nombre_usuario"].ToString();
-                txtEmail.Text = row["email"].ToString();
-                txtEstado.Text = row["estado"].ToString();
-                cmbRol.Text = row["rol"].ToString();
-                txtMotivo.Text = row["motivo_baneo"] != DBNull.Value ? row["motivo_baneo"].ToString() : "";
-                txtPass.Password = "";
-            }
+
+            idUsuarioSeleccionado = Convert.ToInt32(row["id"]);
+            txtID.Text = row["id"].ToString();
+            txtNombre.Text = row["nombre_usuario"].ToString();
+            txtEmail.Text = row["email"].ToString();
+            txtEstado.Text = row["estado"].ToString();
+            cmbRol.Text = row["rol"].ToString();
+            txtMotivo.Text = row["motivo_baneo"] != DBNull.Value ? row["motivo_baneo"].ToString() : "";
+            txtPass.Password = "";
         }
 
         private void BtnAgregar_Click(object sender, RoutedEventArgs e)
@@ -200,21 +206,30 @@ namespace NebulaCore
 
         private void GridJuegos_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (gridJuegos.SelectedItem == null) return;
             DataRowView row = (DataRowView)gridJuegos.SelectedItem;
-            if (row != null)
+
+            idJuegoSeleccionado = Convert.ToInt32(row["id"]);
+            txtJuegoID.Text = row["id"].ToString();
+            txtJuegoTitulo.Text = row["titulo"].ToString();
+            txtJuegoDesc.Text = row["descripcion"].ToString();
+            txtJuegoPrecio.Text = row["precio"].ToString();
+            txtJuegoStock.Text = row["stock"].ToString();
+            cmbJuegoGenero.Text = row["genero"].ToString();
+            txtJuegoImagen.Text = row["imagen_url"].ToString();
+
+            txtJuegoFabricante.Text = row["fabricante"] != DBNull.Value ? row["fabricante"].ToString() : "";
+
+            if (row["visible"] != DBNull.Value)
             {
-                idJuegoSeleccionado = Convert.ToInt32(row["id"]);
-                txtJuegoID.Text = row["id"].ToString();
-                txtJuegoTitulo.Text = row["titulo"].ToString();
-                txtJuegoDesc.Text = row["descripcion"].ToString();
-                txtJuegoPrecio.Text = row["precio"].ToString();
-                txtJuegoStock.Text = row["stock"].ToString();
-                cmbJuegoGenero.Text = row["genero"].ToString();
-                txtJuegoImagen.Text = row["imagen_url"].ToString();
+                chkVisible.IsChecked = Convert.ToBoolean(row["visible"]);
+            }
+            else
+            {
+                chkVisible.IsChecked = true;
             }
         }
 
-        // --- ESTE ES EL BOTÓN QUE TE DABA ERROR ---
         private void BtnBuscarFoto_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtJuegoTitulo.Text))
@@ -222,17 +237,9 @@ namespace NebulaCore
                 MessageBox.Show("Escribe primero el título del juego para buscarlo.");
                 return;
             }
-
-            // Busca en Google: "NombreJuego steam library cover 600x900"
             string busqueda = txtJuegoTitulo.Text.Replace(" ", "+") + "+steam+library+cover+600x900";
             string urlGoogle = $"https://www.google.com/search?q={busqueda}&tbm=isch";
-
-            // Abre el navegador predeterminado
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = urlGoogle,
-                UseShellExecute = true
-            });
+            Process.Start(new ProcessStartInfo { FileName = urlGoogle, UseShellExecute = true });
         }
 
         private void BtnJuegoGuardar_Click(object sender, RoutedEventArgs e)
@@ -240,13 +247,8 @@ namespace NebulaCore
             if (string.IsNullOrWhiteSpace(txtJuegoTitulo.Text) || string.IsNullOrWhiteSpace(txtJuegoPrecio.Text))
             { MessageBox.Show("Título y Precio obligatorios"); return; }
 
-            // Lógica de Foto Automática
-            string fotoFinal = txtJuegoImagen.Text;
-            if (string.IsNullOrWhiteSpace(fotoFinal))
-            {
-                // Foto genérica si no pones nada
-                fotoFinal = "https://cdn.cloudflare.steamstatic.com/steam/apps/105600/library_600x900_2x.jpg";
-            }
+            string fotoFinal = string.IsNullOrWhiteSpace(txtJuegoImagen.Text) ?
+                "https://cdn.cloudflare.steamstatic.com/steam/apps/105600/library_600x900_2x.jpg" : txtJuegoImagen.Text;
 
             try
             {
@@ -256,14 +258,16 @@ namespace NebulaCore
                     MySqlCommand cmd = new MySqlCommand();
                     cmd.Connection = con;
 
+                    int esVisible = (chkVisible.IsChecked == true) ? 1 : 0;
+
                     if (idJuegoSeleccionado == 0)
                     {
-                        cmd.CommandText = "INSERT INTO videojuegos (titulo, descripcion, precio, stock, genero, imagen_url) VALUES (@t, @d, @p, @s, @g, @img)";
+                        cmd.CommandText = "INSERT INTO videojuegos (titulo, descripcion, precio, stock, genero, imagen_url, fabricante, visible) VALUES (@t, @d, @p, @s, @g, @img, @fab, @vis)";
                         RegistrarLog("Añadió juego: " + txtJuegoTitulo.Text);
                     }
                     else
                     {
-                        cmd.CommandText = "UPDATE videojuegos SET titulo=@t, descripcion=@d, precio=@p, stock=@s, genero=@g, imagen_url=@img WHERE id=@id";
+                        cmd.CommandText = "UPDATE videojuegos SET titulo=@t, descripcion=@d, precio=@p, stock=@s, genero=@g, imagen_url=@img, fabricante=@fab, visible=@vis WHERE id=@id";
                         cmd.Parameters.AddWithValue("@id", idJuegoSeleccionado);
                         RegistrarLog("Editó juego: " + txtJuegoTitulo.Text);
                     }
@@ -274,6 +278,8 @@ namespace NebulaCore
                     cmd.Parameters.AddWithValue("@s", Convert.ToInt32(txtJuegoStock.Text));
                     cmd.Parameters.AddWithValue("@g", cmbJuegoGenero.Text);
                     cmd.Parameters.AddWithValue("@img", fotoFinal);
+                    cmd.Parameters.AddWithValue("@fab", txtJuegoFabricante.Text);
+                    cmd.Parameters.AddWithValue("@vis", esVisible);
 
                     cmd.ExecuteNonQuery();
                     MessageBox.Show("Juego guardado correctamente.");
@@ -312,6 +318,8 @@ namespace NebulaCore
             idJuegoSeleccionado = 0;
             txtJuegoID.Clear(); txtJuegoTitulo.Clear(); txtJuegoDesc.Clear();
             txtJuegoPrecio.Clear(); txtJuegoStock.Clear(); txtJuegoImagen.Clear();
+            txtJuegoFabricante.Clear();
+            chkVisible.IsChecked = true;
             gridJuegos.SelectedIndex = -1;
         }
 

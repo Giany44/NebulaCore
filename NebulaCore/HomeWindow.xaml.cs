@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input; // Necesario para el MouseDown
+using System.Windows.Input; // Necesario para MouseButtonEventArgs
 using System.Windows.Media;
 using MySql.Data.MySqlClient;
 
@@ -13,7 +13,7 @@ namespace NebulaCore
     {
         private string usuarioActual;
         private List<Juego> juegosEnPantalla = new List<Juego>();
-        private bool modoBiblioteca = false; // ¿Estamos en tienda o biblioteca?
+        private bool modoBiblioteca = false;
 
         public HomeWindow(string usuario)
         {
@@ -21,10 +21,18 @@ namespace NebulaCore
             usuarioActual = usuario;
             if (txtUsuario != null) txtUsuario.Text = usuarioActual.ToUpper();
 
-            CargarTienda(); // Empezamos en la tienda
+            CargarTienda();
         }
 
-        // --- 1. MODO TIENDA (VER TODOS) ---
+        // --- NUEVO: Lógica para mover la ventana sin bordes ---
+        private void Window_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+            {
+                this.DragMove();
+            }
+        }
+
         private void CargarTienda()
         {
             modoBiblioteca = false;
@@ -37,8 +45,8 @@ namespace NebulaCore
                 using (MySqlConnection con = ConexionDB.ObtenerConexion())
                 {
                     con.Open();
-                    // Seleccionamos todo lo que tenga stock
-                    string sql = "SELECT * FROM videojuegos WHERE stock > 0";
+                    // Filtramos visible = 1 para respetar la decisión del Admin
+                    string sql = "SELECT * FROM videojuegos WHERE stock > 0 AND visible = 1";
                     MySqlCommand cmd = new MySqlCommand(sql, con);
 
                     using (MySqlDataReader reader = cmd.ExecuteReader())
@@ -54,7 +62,8 @@ namespace NebulaCore
                                 Stock = Convert.ToInt32(reader["stock"]),
                                 Genero = reader["genero"].ToString(),
                                 ImagenUrl = reader["imagen_url"].ToString(),
-                                TextoBoton = "COMPRAR" // En tienda se compra
+                                Fabricante = reader["fabricante"].ToString(),
+                                TextoBoton = "COMPRAR"
                             });
                         }
                     }
@@ -65,7 +74,6 @@ namespace NebulaCore
             catch (Exception ex) { MessageBox.Show("Error tienda: " + ex.Message); }
         }
 
-        // --- 2. MODO BIBLIOTECA (VER COMPRADOS) ---
         private void CargarBiblioteca()
         {
             modoBiblioteca = true;
@@ -78,7 +86,6 @@ namespace NebulaCore
                 using (MySqlConnection con = ConexionDB.ObtenerConexion())
                 {
                     con.Open();
-                    // JOIN para traer solo lo que este usuario ha comprado
                     string sql = @"SELECT v.fecha, j.* FROM ventas v 
                                    JOIN videojuegos j ON v.juego_id = j.id 
                                    WHERE v.usuario = @u ORDER BY v.fecha DESC";
@@ -97,8 +104,9 @@ namespace NebulaCore
                                 Descripcion = reader["descripcion"].ToString(),
                                 Genero = reader["genero"].ToString(),
                                 ImagenUrl = reader["imagen_url"].ToString(),
-                                Precio = 0, // En biblioteca ya es tuyo
-                                TextoBoton = "JUGAR" // En biblioteca se juega
+                                Fabricante = reader["fabricante"].ToString(),
+                                Precio = 0,
+                                TextoBoton = "JUGAR"
                             });
                         }
                     }
@@ -112,7 +120,6 @@ namespace NebulaCore
             catch (Exception ex) { MessageBox.Show("Error biblioteca: " + ex.Message); }
         }
 
-        // --- 3. BOTÓN UNIFICADO (ACCION SEGÚN MODO) ---
         private void BtnAccion_Click(object sender, RoutedEventArgs e)
         {
             Button btn = (Button)sender;
@@ -121,12 +128,10 @@ namespace NebulaCore
 
             if (modoBiblioteca)
             {
-                // ESTAMOS EN BIBLIOTECA -> JUGAR
-                MessageBox.Show($"Iniciando {juego.Titulo}...\n\n(Simulación de lanzamiento)", "JUGANDO 🎮");
+                MessageBox.Show($"Iniciando {juego.Titulo}...\nDesarrollado por: {juego.Fabricante}", "JUGANDO 🎮");
             }
             else
             {
-                // ESTAMOS EN TIENDA -> COMPRAR
                 SteamAlert alerta = new SteamAlert("CONFIRMAR COMPRA",
                     $"¿Añadir {juego.Titulo} a tu biblioteca por {juego.PrecioFormato}?");
                 alerta.ShowDialog();
@@ -148,10 +153,8 @@ namespace NebulaCore
                     var trans = con.BeginTransaction();
                     try
                     {
-                        // 1. Restar Stock
                         new MySqlCommand($"UPDATE videojuegos SET stock = stock - 1 WHERE id={juego.Id}", con, trans).ExecuteNonQuery();
 
-                        // 2. Insertar Venta
                         var cmd = new MySqlCommand("INSERT INTO ventas (usuario, juego_id, precio_pagado) VALUES (@u, @jid, @p)", con, trans);
                         cmd.Parameters.AddWithValue("@u", usuarioActual);
                         cmd.Parameters.AddWithValue("@jid", juego.Id);
@@ -160,7 +163,7 @@ namespace NebulaCore
 
                         trans.Commit();
                         new SteamAlert("¡COMPRA EXITOSA!", "Juego añadido a tu biblioteca.", false).ShowDialog();
-                        CargarTienda(); // Recargar para actualizar stock
+                        CargarTienda();
                     }
                     catch { trans.Rollback(); throw; }
                 }
@@ -168,36 +171,18 @@ namespace NebulaCore
             catch (Exception ex) { MessageBox.Show("Error compra: " + ex.Message); }
         }
 
-        // --- 4. EVENTOS DEL MENÚ ---
-        private void BtnMenuTienda_Click(object sender, MouseButtonEventArgs e)
-        {
-            CargarTienda();
-        }
+        private void BtnMenuTienda_Click(object sender, MouseButtonEventArgs e) => CargarTienda();
+        private void BtnMenuBiblioteca_Click(object sender, MouseButtonEventArgs e) => CargarBiblioteca();
 
-        private void BtnMenuBiblioteca_Click(object sender, MouseButtonEventArgs e)
-        {
-            CargarBiblioteca();
-        }
-
-        // Efecto visual para saber en qué pestaña estamos
         private void ResaltarMenu(string menu)
         {
-            var azul = (Brush)new BrushConverter().ConvertFrom("#66C0F4"); // Azul Steam
-            var gris = (Brush)new BrushConverter().ConvertFrom("#8F98A0"); // Gris apagado
+            var azul = (Brush)new BrushConverter().ConvertFrom("#66C0F4");
+            var gris = (Brush)new BrushConverter().ConvertFrom("#8F98A0");
 
-            if (menu == "TIENDA")
-            {
-                menuTienda.Foreground = azul;
-                menuBiblioteca.Foreground = gris;
-            }
-            else
-            {
-                menuTienda.Foreground = gris;
-                menuBiblioteca.Foreground = azul;
-            }
+            if (menu == "TIENDA") { menuTienda.Foreground = azul; menuBiblioteca.Foreground = gris; }
+            else { menuTienda.Foreground = gris; menuBiblioteca.Foreground = azul; }
         }
 
-        // --- FILTROS Y BÚSQUEDA ---
         private void TxtBuscar_TextChanged(object sender, TextChangedEventArgs e)
         {
             string texto = txtBuscar.Text.ToLower();
